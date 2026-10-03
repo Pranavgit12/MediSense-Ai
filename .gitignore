@@ -1,0 +1,38 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Local PGlite dev database (never commit - contains user data)
+.pgdata/
+.pglite/
+
+# Generated datasets (regenerate with `npm run data:build`)
+data/generated/
+
+# Local uploads
+storage/
+.uploads/
+
+coverage/
+.vitest/
+*.log
+.DS_Store
+Thumbs.db
+
+# Raw source datasets supplied by the data provider.
+# These are inputs, not code: they may contain real patient records and must
+# never enter version control or be redistributed. Only the de-identified,
+# aggregate output under data/generated/ is ever committed or shipped.
+#   Symptom-severity.csv  generic relative symptom weights, provider-owned
+#   TestData.xlsx          REAL clinical records - PHI, local use only
+raw-data/
+*.xlsx
+*.csv
+!src/**/*.csv
+!data/sources/*.csv

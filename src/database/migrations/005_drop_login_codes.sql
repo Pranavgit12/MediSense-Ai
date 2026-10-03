@@ -1,0 +1,13 @@
+-- =============================================================================
+-- MediSense :: 005_drop_login_codes
+--
+-- Sign-in has been removed, so the one-time-code table has no reader and no
+-- writer. It is dropped rather than left in place: an empty table of emails and
+-- code hashes is personal data with no purpose, and it is one fewer thing to
+-- reason about in an account-erasure path that no longer exists.
+--
+-- `users` and `sessions` are kept. `user_id` is NOT NULL and carries the reports
+-- and consultations, and `sessions` is left because dropping it would take the
+-- `token_hash` values with it for no gain. Neither is written to any more.
+-- =============================================================================
+DROP TABLE IF EXISTS login_codes;
