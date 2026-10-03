@@ -74,6 +74,44 @@ export function resolveSsl(databaseUrl: string): boolean | object {
   return isLocal ? false : encrypted;
 }
 
+/**
+ * Whether this process is one of many short-lived instances rather than a single
+ * long-lived server.
+ *
+ * The distinction decides how large a connection pool may safely be. On Vercel,
+ * Netlify or Lambda every warm function instance is a separate process with its
+ * own pool, and the platform scales them horizontally without limit. A pool of 10
+ * is then 10 connections *per instance*: a handful of concurrent requests spread
+ * across instances exhausts a managed database's connection limit, and every route
+ * that touches the database starts failing with "too many clients" while
+ * statically prerendered pages keep serving. That asymmetry is what makes it look
+ * like one broken page rather than an outage.
+ */
+function isServerlessHost(): boolean {
+  return Boolean(
+    process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY ||
+      process.env.FUNCTIONS_WORKER_RUNTIME,
+  );
+}
+
+/**
+ * Connections to open per process.
+ *
+ * One on a serverless host, because the platform owns the concurrency and the
+ * database does not. Ten on a normal server, which is a deliberate cap on how many
+ * queries a single box can have in flight. Override with DATABASE_POOL_MAX when
+ * the managed database has headroom to spare.
+ *
+ * Exported for testing. Asserting this needs no database, whereas the alternative
+ * is standing up a serverless host to watch a pool exhaust itself.
+ */
+export function poolSize(env: ReturnType<typeof getEnv>, isServerless = isServerlessHost()): number {
+  if (env.databasePoolMax !== null) return env.databasePoolMax;
+  return isServerless ? 1 : 10;
+}
+
 async function createDb(): Promise<DB> {
   const env = getEnv();
   assertProductionSafety(env);
@@ -83,9 +121,14 @@ async function createDb(): Promise<DB> {
     const pg = await import('pg');
     const pool = new pg.Pool({
       connectionString: env.databaseUrl,
-      max: 10,
+      max: poolSize(env),
       ssl: resolveSsl(env.databaseUrl),
       statement_timeout: 20_000,
+      // Fail fast rather than hanging until the platform's own timeout, so a
+      // saturated database surfaces as an error we can name rather than a request
+      // that hangs until it is killed from outside.
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 10_000,
     });
     // Never log the connection string: it carries credentials.
     pool.on('error', () => undefined);

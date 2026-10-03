@@ -31,6 +31,12 @@ export interface AppEnv {
   isProd: boolean;
 
   databaseUrl: string | null;
+  /**
+   * Postgres pool size per process. Null means "choose for the host": 10 on a
+   * long-lived server, 1 on a serverless host. See `database/client.ts` for why
+   * the second number is the one that matters in production.
+   */
+  databasePoolMax: number | null;
   pgliteDataDir: string;
   migrationsDir: string;
 
@@ -120,6 +126,7 @@ function build(): AppEnv {
     isProd: nodeEnv === 'production',
 
     databaseUrl: raw('DATABASE_URL') ?? null,
+    databasePoolMax: raw('DATABASE_POOL_MAX') ? int(raw('DATABASE_POOL_MAX'), 10) : null,
     pgliteDataDir: raw('PGLITE_DATA_DIR') ?? './.pgdata',
     migrationsDir: raw('MIGRATIONS_DIR') ?? './src/database/migrations',
 
