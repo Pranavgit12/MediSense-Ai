@@ -1,0 +1,49 @@
+﻿services:
+  - type: web
+    name: medisense
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npx next start -p 
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_URL
+        sync: false
+      - key: APP_NAME
+        value: MediSense
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_POOL_MAX
+        value: 1
+      - key: AUTH_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: MAX_UPLOAD_BYTES
+        value: 10485760
+      - key: RATE_LIMIT_ENABLED
+        value: true
+      - key: RATE_LIMIT_REQUESTS
+        value: 60
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: 60
+      - key: DATA_ENCRYPTION_KEY
+        sync: false
+      - key: PGLITE_DATA_DIR
+        value: ./.pgdata
+      - key: MIGRATIONS_DIR
+        value: ./src/database/migrations
+      - key: LLM_PROVIDER
+        value: mock
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: EMBEDDING_PROVIDER
+        value: mock
+      - key: OCR_PROVIDER
+        value: mock
+      - key: SAFETY_ENGINE_ENABLED
+        value: true
+      - key: CLINICAL_RULES_MODE
+        value: enforce
