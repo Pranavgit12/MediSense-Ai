@@ -3,8 +3,8 @@
     name: medisense
     env: node
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npx next start -p 
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
