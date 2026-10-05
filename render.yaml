@@ -4,6 +4,10 @@
     env: node
     plan: free
     buildCommand: npm ci && npm run build
+    # No preDeployCommand: Render rejects the whole deploy if it is set on a
+    # free-plan service. Run migrations from a local checkout instead:
+    #   npm run db:migrate
+    # which points at the same Supabase database.
     startCommand: npm run start
     healthCheckPath: /
     envVars:
@@ -13,12 +17,20 @@
         sync: false
       - key: APP_NAME
         value: MediSense
+      # Supabase session pooler, not the transaction pooler (no session, so
+      # the DDL a migration needs cannot run against it).
+      # Host: aws-0-<region>.pooler.supabase.com, port 5432
+      # User: postgres.<project-ref>  (a bare "postgres" is rejected)
       - key: DATABASE_URL
         sync: false
+      # Render free plan runs one instance. Keep the pool at 1 so the app never
+      # exceeds Supabase's connection allowance.
       - key: DATABASE_POOL_MAX
         value: 1
       - key: AUTH_SECRET
         sync: false
+      # Set this to the deployed origin after the first deploy, otherwise origin
+      # checks reject your own requests.
       - key: ALLOWED_ORIGINS
         sync: false
       - key: MAX_UPLOAD_BYTES
@@ -31,15 +43,20 @@
         value: 60
       - key: DATA_ENCRYPTION_KEY
         sync: false
-      - key: PGLITE_DATA_DIR
-        value: ./.pgdata
       - key: MIGRATIONS_DIR
         value: ./src/database/migrations
+      # Render's filesystem is ephemeral, so every uploaded PDF is lost when the
+      # instance restarts or redeploys. Add the S3_* vars (private bucket) to
+      # make uploads durable.
+      - key: STORAGE_LOCAL_DIR
+        value: ./.uploads
       - key: LLM_PROVIDER
-        value: openai
+        value: mock
       - key: LLM_MODEL
         value: gpt-4o-mini
       - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
         sync: false
       - key: EMBEDDING_PROVIDER
         value: mock
