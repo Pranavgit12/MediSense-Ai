@@ -5,7 +5,7 @@
   "description": "MediSense - AI health assistant that explains medical reports and helps you prepare for a doctor.",
   "type": "module",
   "engines": {
-    "node": ">=20.11 <21"
+    "node": ">=22.13 <23"
   },
   "scripts": {
     "dev": "next dev",
